@@ -1,0 +1,6 @@
+/* RebootCC 控制中心模組。Key 是 RBCActions.m 裡的英文字串。 */
+
+"Respring" = "Respring";
+"Userspace Reboot" = "Userspace Reboot";
+"Safe Mode" = "Safe Mode";
+"Tap again to confirm" = "Tap again to confirm";

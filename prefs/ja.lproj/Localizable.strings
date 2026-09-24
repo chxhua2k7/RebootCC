@@ -1,0 +1,12 @@
+/* RebootCC settings page. Keys are the English strings in RebootCC.plist and RBCRootListController.m. */
+
+"RebootCC" = "RebootCC";
+"Tap twice to confirm" = "2回タップで実行";
+"Tap the module to respring, long-press for more. With this on, Userspace Reboot and Safe Mode run on the second tap." = "モジュールをタップすると SpringBoard を再起動、長押しでその他の操作。オンにすると、Userspace Reboot とセーフモードは2回目のタップで実行されます。";
+"About" = "情報";
+"Version" = "バージョン";
+"© 2026 chxhua2k7. Licensed under GPL-3.0." = "© 2026 chxhua2k7。GPL-3.0 ライセンス。";
+"Apply" = "適用";
+"Restart SpringBoard to apply?" = "SpringBoard を再起動して適用しますか？";
+"Cancel" = "キャンセル";
+"Respring" = "再起動";

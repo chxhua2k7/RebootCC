@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>entry</key>
+	<dict>
+		<key>bundle</key>
+		<string>RebootCCPrefs</string>
+		<key>cell</key>
+		<string>PSLinkCell</string>
+		<key>icon</key>
+		<string>RebootCC.png</string>
+		<key>isController</key>
+		<true/>
+		<key>label</key>
+		<string>RebootCC</string>
+		<key>pl_alt_plist_name</key>
+		<string>RebootCC</string>
+	</dict>
+	<key>title</key>
+	<string>RebootCC</string>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Tap the module to respring, long-press for more. With this on, Userspace Reboot and Safe Mode run on the second tap.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.c3x14n.rebootcc</string>
+			<key>iconColor</key>
+			<string>#FF9500</string>
+			<key>iconSymbol</key>
+			<string>hand.tap</string>
+			<key>key</key>
+			<string>confirm</string>
+			<key>label</key>
+			<string>Tap twice to confirm</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>© 2026 chxhua2k7. Licensed under GPL-3.0.</string>
+			<key>label</key>
+			<string>About</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSTitleValueCell</string>
+			<key>get</key>
+			<string>rbcVersion:</string>
+			<key>iconColor</key>
+			<string>#8F8F94</string>
+			<key>iconSymbol</key>
+			<string>info.circle</string>
+			<key>label</key>
+			<string>Version</string>
+		</dict>
+	</array>
+</dict>
+</plist>
