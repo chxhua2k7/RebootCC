@@ -1,6 +1,6 @@
 Package: com.c3x14n.rebootcc
 Name: RebootCC
-Version: 1.0.1
+Version: 1.0.2
 Architecture: iphoneos-arm64
 Description: Control Center module: tap to respring, long-press for userspace reboot and safe mode.
 Depends: firmware (>= 15.0), com.opa334.ccsupport (>= 1.3), preferenceloader (>= 2.2.6)

@@ -1,6 +1,6 @@
 # 版本號只寫在這裡:以 RBC_VERSION 傳給設定 bundle(「關於」的版本列),
 # 兩個 Info.plist 的 __VERSION__ 在 stage 時填入。control 的 Version 由 Theos 用這個值覆蓋。
-export PACKAGE_VERSION := 1.0.1
+export PACKAGE_VERSION := 1.0.2
 
 TARGET := iphone:clang:16.5:15.0
 
