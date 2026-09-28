@@ -1,9 +1,11 @@
 //
 //  RBCModule.m
 //  控制中心模組(Info.plist 的 NSPrincipalClass)。CCSupport 在 SpringBoard 裡建立它。
-//  - 點一下:respring
-//  - 長按:展開選單,有 respring、userspace reboot、安全模式
-//  - 後兩項預設要點兩次:第一次點時選單不收起,副標題改成「再點一次以確認」,4 秒內再點同一項才執行
+//  - 點一下:設定頁選的動作(預設 respring)
+//  - 長按:展開選單,列出設定頁勾選的動作(respring、重建圖示快取、userspace reboot、安全模式、重新開機)
+//  - 要確認的動作(見 RBCActionNeedsConfirm):第一次點時選單不收起,副標題改成「再點一次以確認」,
+//    4 秒內再點同一項才執行
+//  - 裝置鎖定時(設定頁的 requireUnlock)先透過控制中心要求 Face ID / 密碼,驗證通過才執行
 //
 
 #import "RBCPrivate.h"
@@ -32,7 +34,7 @@ static const NSTimeInterval kRBCConfirmWindow = 4;
 // 點一下
 - (void)buttonTapped:(id)button forEvent:(UIEvent *)event {
     [super buttonTapped:button forEvent:event];
-    RBCPerform(RBCActionRespring);
+    [self rbcRun:RBCTapAction()];
 }
 
 // 長按
@@ -57,7 +59,8 @@ static const NSTimeInterval kRBCConfirmWindow = 4;
 
 - (void)rbcReloadMenu {
     [self removeAllActions];
-    for (RBCAction action = RBCActionRespring; action <= RBCActionSafeMode; action++) {
+    for (RBCAction action = RBCActionFirst; action <= RBCActionLast; action++) {
+        if (!RBCActionIsShownInMenu(action)) continue;
         NSString *subtitle = (action == _pendingAction) ? RBCLocalized(@"Tap again to confirm") : nil;
         __weak typeof(self) weakSelf = self;
         [self addActionWithTitle:RBCActionTitle(action) subtitle:subtitle glyph:RBCActionGlyph(action) handler:^BOOL{
@@ -76,6 +79,7 @@ static const NSTimeInterval kRBCConfirmWindow = 4;
 
 // 回傳 YES 收起選單
 - (BOOL)rbcHandleAction:(RBCAction)action {
+    RBCLog(@"menu item %ld tapped, pending %ld", (long)action, (long)_pendingAction);
     if (RBCActionNeedsConfirm(action) && _pendingAction != action) {
         // 在 handler 裡重建選單不安全(super 還在處理這次點選),下一輪再做
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -89,8 +93,25 @@ static const NSTimeInterval kRBCConfirmWindow = 4;
     }
     _pendingAction = RBCActionNone;
     _pendingGeneration++;
-    RBCPerform(action);
+    [self rbcRun:action];
     return YES;
+}
+
+#pragma mark 執行
+
+- (void)rbcRun:(RBCAction)action {
+    RBCLog(@"run %ld, context %@", (long)action, self.contentModuleContext);
+    if (!RBCUnlockRequired()) {
+        RBCPerform(action);
+        return;
+    }
+    // 沒拿到控制中心的 context 就不執行,不能繞過解鎖
+    CCUIContentModuleContext *context = self.contentModuleContext;
+    if (![context respondsToSelector:@selector(requestAuthenticationWithCompletionHandler:)]) return;
+    [context requestAuthenticationWithCompletionHandler:^(BOOL authenticated) {
+        RBCLog(@"authentication for %ld: %d", (long)action, authenticated);
+        if (authenticated) RBCPerform(action);
+    }];
 }
 
 @end
@@ -100,6 +121,9 @@ static const NSTimeInterval kRBCConfirmWindow = 4;
 
 @implementation RBCModule {
     RBCModuleViewController *_contentViewController;
+    // view controller 的 contentModuleContext 是 weak,控制中心也沒有替我們留著它(實機上轉交後
+    // 馬上變成 nil),所以模組自己持有
+    id _contentModuleContext;
 }
 
 - (instancetype)init {
@@ -115,6 +139,13 @@ static const NSTimeInterval kRBCConfirmWindow = 4;
 
 - (UIViewController *)backgroundViewController {
     return nil;
+}
+
+// 控制中心建立模組後給的 context,轉交 view controller(收起選單、要求解鎖都要用)
+- (void)setContentModuleContext:(id)context {
+    RBCLog(@"setContentModuleContext: %@", context);
+    _contentModuleContext = context;
+    _contentViewController.contentModuleContext = context;
 }
 
 @end

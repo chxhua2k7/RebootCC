@@ -1,8 +1,18 @@
 /* RebootCC settings page. Keys are the English strings in RebootCC.plist and RBCRootListController.m. */
 
 "RebootCC" = "RebootCC";
+"Tap the module to run this action. Long-press it for the menu below." = "Tap the module to run this action. Long-press it for the menu below.";
+"Tap action" = "Tap action";
+"Menu" = "Menu";
+"Restart SpringBoard" = "Restart SpringBoard";
+"Rebuild Icon Cache" = "Rebuild Icon Cache";
+"Userspace Reboot" = "Userspace Reboot";
+"Safe Mode" = "Safe Mode";
+"Reboot" = "Reboot";
+"With this on, Userspace Reboot and Safe Mode run on the second tap. Reboot always needs two taps." = "With this on, Userspace Reboot and Safe Mode run on the second tap. Reboot always needs two taps.";
 "Tap twice to confirm" = "Tap twice to confirm";
-"Tap the module to respring, long-press for more. With this on, Userspace Reboot and Safe Mode run on the second tap." = "Tap the module to respring, long-press for more. With this on, Userspace Reboot and Safe Mode run on the second tap.";
+"While the device is locked, Face ID or the passcode is asked for first." = "While the device is locked, Face ID or the passcode is asked for first.";
+"Require unlock when locked" = "Require unlock when locked";
 "About" = "About";
 "Version" = "Version";
 "© 2026 chxhua2k7. Licensed under GPL-3.0." = "© 2026 chxhua2k7. Licensed under GPL-3.0.";

@@ -1,8 +1,9 @@
 //
 //  RBCActions.m
-//  三個動作的實作。模組跑在 SpringBoard(mobile):
+//  動作的實作。模組跑在 SpringBoard(mobile):
 //  - respring:spawn sbreload(uikittools),失敗才退回 FrontBoardServices 的 SBSRelaunchAction
-//  - userspace reboot / 安全模式:spawn setuid root 的 RebootCCHelper(見 helper/main.c)
+//  - 重建圖示快取 / userspace reboot / 安全模式 / 重新開機:spawn setuid root 的 RebootCCHelper
+//    (見 helper/main.c)
 //
 
 #import "RBCActions.h"
@@ -16,17 +17,34 @@
 #define THEOS_PACKAGE_INSTALL_PREFIX ""
 #endif
 
-#ifdef DEBUG
-#define RBCLog(fmt, ...) NSLog(@"[RebootCC] " fmt, ##__VA_ARGS__)
-#else
-#define RBCLog(fmt, ...) do {} while (0)
-#endif
 
 extern char **environ;
 
 static CFStringRef const kRBCPreferencesDomain = CFSTR("com.c3x14n.rebootcc");
 static const char *const kRBCSbreloadPath = THEOS_PACKAGE_INSTALL_PREFIX "/usr/bin/sbreload";
 static const char *const kRBCHelperPath = THEOS_PACKAGE_INSTALL_PREFIX "/usr/libexec/RebootCCHelper";
+
+#pragma mark - 除錯記錄
+
+#ifdef DEBUG
+// SpringBoard 的 unified log 用 mobile 讀不到,除錯版寫到檔案
+void RBCDebugLog(NSString *format, ...) {
+    va_list args;
+    va_start(args, format);
+    NSString *message = [[NSString alloc] initWithFormat:format arguments:args];
+    va_end(args);
+    NSString *line = [NSString stringWithFormat:@"%@ %@\n", [NSDate date], message];
+    NSString *path = @"/var/mobile/Library/Logs/RebootCC.log";
+    NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath:path];
+    if (!handle) {
+        [line writeToFile:path atomically:NO encoding:NSUTF8StringEncoding error:nil];
+        return;
+    }
+    [handle seekToEndOfFile];
+    [handle writeData:[line dataUsingEncoding:NSUTF8StringEncoding]];
+    [handle closeFile];
+}
+#endif
 
 #pragma mark - 文字和圖示
 
@@ -39,11 +57,26 @@ NSString *RBCLocalized(NSString *key) {
     return [bundle localizedStringForKey:key value:key table:nil] ?: key;
 }
 
+// 代表動作的字串:tapAction 的值、show<Key> 的後綴、helper 的參數
+static NSString *RBCActionKey(RBCAction action) {
+    switch (action) {
+        case RBCActionRespring: return @"respring";
+        case RBCActionRebuildIconCache: return @"uicache";
+        case RBCActionUserspaceReboot: return @"userspace";
+        case RBCActionSafeMode: return @"safemode";
+        case RBCActionReboot: return @"reboot";
+        case RBCActionNone: break;
+    }
+    return nil;
+}
+
 NSString *RBCActionTitle(RBCAction action) {
     switch (action) {
         case RBCActionRespring: return RBCLocalized(@"Respring");
+        case RBCActionRebuildIconCache: return RBCLocalized(@"Rebuild Icon Cache");
         case RBCActionUserspaceReboot: return RBCLocalized(@"Userspace Reboot");
         case RBCActionSafeMode: return RBCLocalized(@"Safe Mode");
+        case RBCActionReboot: return RBCLocalized(@"Reboot");
         case RBCActionNone: break;
     }
     return @"";
@@ -53,8 +86,10 @@ UIImage *RBCActionGlyph(RBCAction action) {
     NSString *symbol = nil;
     switch (action) {
         case RBCActionRespring: symbol = @"arrow.clockwise"; break;
+        case RBCActionRebuildIconCache: symbol = @"square.grid.2x2"; break;
         case RBCActionUserspaceReboot: symbol = @"arrow.triangle.2.circlepath"; break;
         case RBCActionSafeMode: symbol = @"checkmark.shield"; break;
+        case RBCActionReboot: symbol = @"power"; break;
         case RBCActionNone: return nil;
     }
     return [UIImage systemImageNamed:symbol];
@@ -62,13 +97,55 @@ UIImage *RBCActionGlyph(RBCAction action) {
 
 #pragma mark - 設定
 
-BOOL RBCActionNeedsConfirm(RBCAction action) {
-    if (action != RBCActionUserspaceReboot && action != RBCActionSafeMode) return NO;
-    // 每次都重新讀,設定頁改了不必 respring
+// 每次都重新讀,設定頁改了不必 respring
+static BOOL RBCPreferenceBool(NSString *key, BOOL fallback) {
     CFPreferencesAppSynchronize(kRBCPreferencesDomain);
     Boolean valid = false;
-    Boolean confirm = CFPreferencesGetAppBooleanValue(CFSTR("confirm"), kRBCPreferencesDomain, &valid);
-    return valid ? confirm : YES;
+    Boolean value = CFPreferencesGetAppBooleanValue((__bridge CFStringRef)key, kRBCPreferencesDomain, &valid);
+    return valid ? value : fallback;
+}
+
+RBCAction RBCTapAction(void) {
+    CFPreferencesAppSynchronize(kRBCPreferencesDomain);
+    id value = CFBridgingRelease(CFPreferencesCopyAppValue(CFSTR("tapAction"), kRBCPreferencesDomain));
+    if ([value isKindOfClass:[NSString class]]) {
+        for (RBCAction action = RBCActionFirst; action <= RBCActionLast; action++) {
+            if ([value isEqualToString:RBCActionKey(action)]) return action;
+        }
+    }
+    return RBCActionRespring;
+}
+
+BOOL RBCActionIsShownInMenu(RBCAction action) {
+    NSString *key = RBCActionKey(action);
+    if (!key) return NO;
+    // show + 首字大寫,例如 showUserspace
+    NSString *name = [[key substringToIndex:1].uppercaseString stringByAppendingString:[key substringFromIndex:1]];
+    return RBCPreferenceBool([@"show" stringByAppendingString:name], YES);
+}
+
+BOOL RBCActionNeedsConfirm(RBCAction action) {
+    if (action == RBCActionReboot) return YES; // 重開後會失去越獄,一律要點兩次
+    if (action != RBCActionUserspaceReboot && action != RBCActionSafeMode) return NO;
+    return RBCPreferenceBool(@"confirm", YES);
+}
+
+// SpringBoard 的鎖定狀態;查不到時當成鎖定,寧可多要求一次解鎖
+static BOOL RBCDeviceIsLocked(void) {
+    Class managerClass = objc_getClass("SBLockScreenManager");
+    if (![managerClass respondsToSelector:@selector(sharedInstance)]) return YES;
+    id manager = ((id (*)(id, SEL))objc_msgSend)(managerClass, @selector(sharedInstance));
+    if (![manager respondsToSelector:@selector(isUILocked)]) {
+        RBCLog(@"SBLockScreenManager %@ has no isUILocked", manager);
+        return YES;
+    }
+    BOOL locked = ((BOOL (*)(id, SEL))objc_msgSend)(manager, @selector(isUILocked));
+    RBCLog(@"isUILocked = %d", locked);
+    return locked;
+}
+
+BOOL RBCUnlockRequired(void) {
+    return RBCPreferenceBool(@"requireUnlock", YES) && RBCDeviceIsLocked();
 }
 
 #pragma mark - 執行
@@ -112,11 +189,11 @@ void RBCPerform(RBCAction action) {
         case RBCActionRespring:
             if (!RBCSpawn(kRBCSbreloadPath, NULL)) RBCRelaunchSpringBoard();
             break;
+        case RBCActionRebuildIconCache:
         case RBCActionUserspaceReboot:
-            RBCSpawn(kRBCHelperPath, "userspace");
-            break;
         case RBCActionSafeMode:
-            RBCSpawn(kRBCHelperPath, "safemode");
+        case RBCActionReboot:
+            RBCSpawn(kRBCHelperPath, RBCActionKey(action).UTF8String);
             break;
         case RBCActionNone:
             break;

@@ -20,7 +20,13 @@
 // handler 回傳 YES 時選單收起,NO 時維持展開
 typedef BOOL (^CCUIMenuModuleActionHandler)(void);
 
+// 模組和控制中心之間的橋梁;鎖定時用它要求 Face ID / 密碼
+@interface CCUIContentModuleContext : NSObject
+- (void)requestAuthenticationWithCompletionHandler:(void (^)(BOOL authenticated))completion;
+@end
+
 @interface CCUIMenuModuleViewController : CCUIButtonModuleViewController
+@property (nonatomic, weak) CCUIContentModuleContext *contentModuleContext;
 - (void)addActionWithTitle:(NSString *)title subtitle:(NSString *)subtitle glyph:(UIImage *)glyph handler:(CCUIMenuModuleActionHandler)handler;
 - (void)removeAllActions;
 - (BOOL)shouldBeginTransitionToExpandedContentModule;

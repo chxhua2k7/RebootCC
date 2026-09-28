@@ -1,8 +1,18 @@
 /* RebootCC settings page. Keys are the English strings in RebootCC.plist and RBCRootListController.m. */
 
 "RebootCC" = "RebootCC";
+"Tap the module to run this action. Long-press it for the menu below." = "点一下模块会执行这个操作，长按则展开下面的菜单。";
+"Tap action" = "点一下时";
+"Menu" = "长按菜单";
+"Restart SpringBoard" = "重新启动 SpringBoard";
+"Rebuild Icon Cache" = "重建图标缓存";
+"Userspace Reboot" = "Userspace Reboot";
+"Safe Mode" = "安全模式";
+"Reboot" = "重新启动设备";
+"With this on, Userspace Reboot and Safe Mode run on the second tap. Reboot always needs two taps." = "开启后，Userspace Reboot 和安全模式要点第二次才执行。重新启动设备始终要点两次。";
 "Tap twice to confirm" = "点两次才执行";
-"Tap the module to respring, long-press for more. With this on, Userspace Reboot and Safe Mode run on the second tap." = "点一下模块会重新启动 SpringBoard，长按有更多选项。开启后，Userspace Reboot 和安全模式要点第二次才执行。";
+"While the device is locked, Face ID or the passcode is asked for first." = "设备锁定时，会先要求面容 ID 或密码。";
+"Require unlock when locked" = "锁定时需先解锁";
 "About" = "关于";
 "Version" = "版本";
 "© 2026 chxhua2k7. Licensed under GPL-3.0." = "© 2026 chxhua2k7。以 GPL-3.0 授权。";
