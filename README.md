@@ -1,5 +1,7 @@
 # RebootCC
 
+> **已併入 [ControlDeck](https://github.com/chxhua2k7/ControlDeck)。** RebootCC 現在是 ControlDeck 的一個模組，這個 repo 已封存、不再更新。ControlDeck 安裝時會自動取代 `com.c3x14n.rebootcc`。
+
 控制中心模組：點一下重新啟動 SpringBoard（可改），長按展開選單，可選重新啟動 SpringBoard、重建圖示快取、Userspace Reboot、安全模式和重新開機。
 
 - 需要 Dopamine（rootless）、[CCSupport](https://github.com/opa334/CCSupport)、PreferenceLoader。
